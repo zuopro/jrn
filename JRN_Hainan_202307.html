@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>旅行日程</title>
+	<style type="text/css">
+		body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+		#basemap {height:95%; width: 100%;}
+		#group {float:right;}
+	</style>
+	<script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=cUpbG3sj0NXN3LsohX3IX7v1EoeCYx4P">
+	</script>
+</head>
+
+<body>
+	<select id="group">
+    <option name="slt" value="all">全</option>
+    <option name="slt" value="food">吃</option>
+    <option name="slt" value="hotel">住</option>
+    <option name="slt" value="traffic">行</option>
+    <option name="slt" value="mountain">山</option>
+    <option name="slt" value="waters">水</option>
+		<option name="slt" value="culture">人</option>
+    <option name="slt" value="park">园</option>
+    <option name="slt" value="like">喜</option>
+  </select>
+	<div id="basemap"></div>
+</body>
+
+</html>
+
+<script type="text/javascript">
+	/*----------------------------------------数据更新----------------------------------------*/
+	//初始化地图
+	var map = new BMapGL.Map("basemap");//实例化底图
+	var mapCenter = new BMapGL.Point(110.3148,19.916769);//城市中心110.279694,20.017495 116.425, 39.945
+	map.centerAndZoom(mapCenter, 12);//初始化城市中心及缩放级别
+	//map.setMapStyleV2({styleId: '3d38e5c2282dade5c9e5d7077b028b8b'});//地图样式
+	map.enableScrollWheelZoom();//可缩放
+
+	//旅行地点信息--全 all 、吃 food 、住 hotel 、行 traffic 、山 mountain 、水 waters 、人 culture 、园 park 、喜 like
+	var jrnData = [//范例
+								 {"lng":116.425,"lat":39.995,"grp":"food","ttl":"烧烤","info":"犄角旮旯"},
+								 {"lng":116.443,"lat":39.987,"grp":"hotel","ttl":"酒店","info":"中心广场"},
+								 {"lng":116.465,"lat":39.975,"grp":"traffic","ttl":"飞机","info":"犄角旮旯"},
+ 								 {"lng":116.483,"lat":39.967,"grp":"food","ttl":"奶茶","info":"中心广场"},
+								 {"lng":116.405,"lat":39.955,"grp":"mountain","ttl":"大山","info":"犄角旮旯"},
+ 								 {"lng":116.413,"lat":39.947,"grp":"waters","ttl":"大海","info":"中心广场"},
+								 {"lng":116.435,"lat":39.935,"grp":"culture","ttl":"庙","info":"犄角旮旯"},
+ 								 {"lng":116.453,"lat":39.927,"grp":"like","ttl":"好玩点","info":"中心广场"},
+								 {"lng":116.475,"lat":39.915,"grp":"park","ttl":"公园","info":"犄角旮旯"},
+ 								 {"lng":116.493,"lat":39.907,"grp":"like","ttl":"滑梯","info":"中心广场"},
+
+
+								 //海口
+								 {"lng":110.352511,"lat":20.046485,"grp":"like","ttl":"东门市场_gd","info":"干活集散地"},
+								 {"lng":110.350069,"lat":20.049,"grp":"like","ttl":"南国超市_gd","info":"海南特产"},
+								 {"lng":110.34879,"lat":20.048462,"grp":"culture","ttl":"骑楼老街_qy,gd","info":"四牌楼建于南宋，得胜沙路、中山路、博爱路、新华路、解放路、长堤路等<br>开放时间：全天"},
+								 {"lng":110.366281,"lat":20.013831,"grp":"culture","ttl":"五公祠_qy,gd","info":"海南历史，南洋风格古建群，旁有东坡祠<br>开放时间：8:00~18:00"},
+								 {"lng":110.385478,"lat":20.021773,"grp":"culture","ttl":"海南省博物馆_qy,gd","info":"最美建筑，展品不多<br>开放时间：9:00~17:00，周一闭馆"},
+								 {"lng":110.313273,"lat":20.027131,"grp":"culture","ttl":"秀英炮台_qy,gd","info":"与大沽口炮台同期，清朝海防<br>开放时间：7:30~18:00"},
+								 {"lng":110.36311,"lat":20.005071,"grp":"culture","ttl":"琼台书院_qy,gd","info":"初建海南的登科之地，琼台师范内<br>开放时间：8:00~17:30"},
+								 {"lng":110.349472,"lat":20.048988,"grp":"culture","ttl":"天后宫_gd","info":"海南最大妈祖庙"},
+								 {"lng":110.348248,"lat":20.050314,"grp":"culture","ttl":"钟楼_qy,gd","info":"海口八景之一<br>开放时间：全天"},
+								 {"lng":110.587541,"lat":19.956245,"grp":"waters","ttl":"东寨港红树林_qy,gd","info":"亚洲最大世界第三，涨潮可快艇驶入，官船或农家乐私船<br>开放时间：9:00-17:30(17:00停止入场)"},
+								 {"lng":110.228186,"lat":19.933676,"grp":"park","ttl":"火山群世界地质公园_qy,gd","info":"海口最高点，火山遗迹和奇石<br>开放时间：8:00~18:00"},
+								 {"lng":110.350121,"lat":20.039813,"grp":"park","ttl":"人民公园_qy,gd","info":"老街附近<br>开放时间：全天"},
+								 {"lng":110.252645,"lat":19.776328,"grp":"park","ttl":"热带野生动植物园_qy,gd","info":"热带动植物，半步行，半自驾<br>开放时间：7:40~17:30"},
+								 {"lng":110.320459,"lat":20.039324,"grp":"park","ttl":"万绿园_qy,gd","info":"最大公园，大草坪<br>开放时间：全天"},
+								 {"lng":110.323567,"lat":20.015525,"grp":"park","ttl":"金牛岭公园_qy,gd","info":"综合型园林<br>开放时间：5:00~23:00"},
+
+
+
+								 //文昌
+								 {"lng":110.765382,"lat":19.611888,"grp":"food","ttl":"阿侬盐焗鸡_gd,dz","info":"联系电话：13034984965<br>开放时间：9:30~次日3:00"},
+								 {"lng":110.695294,"lat":20.162006,"grp":"culture","ttl":"木兰湾灯塔_gd","info":"海南最北，亚洲最高灯塔"},
+								 {"lng":110.589203,"lat":20.034907,"grp":"culture","ttl":"溪北书院_gd","info":"铺前古建群"},
+								 {"lng":110.759272,"lat":19.621316,"grp":"culture","ttl":"文南老街_gd","info":"南洋风格商业街"},
+								 {"lng":110.760237,"lat":19.623695,"grp":"culture","ttl":"文昌孔庙_gd","info":"海南第一庙，始建北宋，斜对为文昌公园，近代多名人题字"},
+								 {"lng":110.877543,"lat":19.745582,"grp":"culture","ttl":"宋氏祖居_gd","info":"宋家祖宅，宋庆龄陈列馆和植物园<br>开放时间：8:00~18:00"},
+								 {"lng":110.870755,"lat":19.536883,"grp":"waters","ttl":"东郊椰林_gd","info":"中国最长椰树走廊，可观日出日落，吃椰子鸡，可租车骑行"},
+								 {"lng":110.795973,"lat":19.63385,"grp":"waters","ttl":"八门湾红树林绿道_gd","info":"红树林可快艇，植物品种多，绿道全长54公里，可租车骑行，深入渔民村落"},
+								 {"lng":111.028365,"lat":19.674434,"grp":"mountain","ttl":"铜鼓岭_gd","info":"琼东第一峰，山顶草坡，海边悬崖，远观海湾的震撼美景，红果有毒"},
+								 {"lng":111.037193,"lat":19.65831,"grp":"culture","ttl":"佛光寺_gd","info":"泰籍华侨为母献建，国内唯一小乘佛教的大佛像"},
+								 {"lng":111.040937,"lat":19.640973,"grp":"mountain","ttl":"石头公园_gd","info":"奇石林立，原生态"},
+								 {"lng":111.044484,"lat":19.647248,"grp":"waters","ttl":"大澳湾_gd","info":"白色沙滩，原生态"},
+								 {"lng":111.040172,"lat":19.65787,"grp":"waters","ttl":"小澳湾_gd","info":"白色沙滩，原生态"},
+								 {"lng":110.985902,"lat":19.639496,"grp":"waters","ttl":"云龙湾_gd","info":"白色沙滩，原生态，珊瑚礁，珊瑚鱼"},
+								 {"lng":111.011534,"lat":19.73101,"grp":"waters","ttl":"月亮湾_gd","info":"白色沙滩，原生态，最长防风林"},
+
+								 //琼海
+								 {"lng":110.239131,"lat":19.01215,"grp":"mountain","ttl":"万泉河峡谷景区_gd","info":"溯溪漂流"},
+
+								 //万宁
+								 {"lng":110.4307,"lat":18.809494,"grp":"culture","ttl":"潮音寺_gd","info":"岳飞老师李纲流放东山岭，东山再起，香火旺"},
+								 {"lng":110.400762,"lat":18.800054,"grp":"culture","ttl":"万城老街_gd","info":"沧桑的旧时街区，武丁街、南门街、朝阳街、镇南街、镇北街等"},
+								 {"lng":110.4307,"lat":18.809494,"grp":"food","ttl":"东山羊_gd","info":"待定"},
+								 {"lng":110.203093,"lat":18.739945,"grp":"park","ttl":"兴隆热带植物园_gd","info":"农业部下属，热带香料植物，科普，比邻南药园<br>开放时间：7:00~17:45"},
+								 {"lng":110.242568,"lat":18.698096,"grp":"park","ttl":"兴隆热带花园_gd","info":"印尼华侨兴建的濒危植物，雨林再造，相比植物园轻松自然<br>开放时间：7:30~18:00"},
+								 {"lng":110.211437,"lat":18.741013,"grp":"park","ttl":"兴隆咖啡文化博览园_gd","info":"怡然咖啡厂下属的制作现场、咖啡教室等<br>开放时间：8:00~18:00"},
+								 {"lng":110.222836,"lat":18.633856,"grp":"waters","ttl":"日月湾_gd","info":"冲浪圣地"},
+								 {"lng":110.27853,"lat":18.668224,"grp":"waters","ttl":"石梅湾_gd","info":"浪静沙白，百米处水深不过3米"},
+								 {"lng":110.484119,"lat":18.909566,"grp":"food","ttl":"和乐蟹_gd","info":"待定"},
+
+
+								 //陵水
+								 {"lng":110.207135,"lat":18.582603,"grp":"mountain","ttl":"分界洲岛_gd","info":"南北气候分界，汉族黎苗文化分界，适合海钓，有海上运动"},
+								 {"lng":109.987141,"lat":18.408274,"grp":"mountain","ttl":"南湾猴岛_gd","info":"1500只猕猴保护区"},
+								 {"lng":109.922415,"lat":18.666102,"grp":"mountain","ttl":"吊罗山国家森林公园_gd","info":"热带原始森林，天然野趣，植被丰富<br>开放时间：8:00~17:30"},
+
+								 //五指山
+								 {"lng":109.688186,"lat":18.913686,"grp":"mountain","ttl":"五指山保护区_gd","info":"A线攀登一峰、二峰5小时，C线1小时<br>开放时间：7:00~17:30"},
+								 {"lng":109.681913,"lat":18.872011,"grp":"mountain","ttl":"五指山热带雨林风景区_gd","info":"可一览五峰全貌，不走小路，小心毒蛇蚂蟥<br>开放时间：8:30~17:00"},
+								 {"lng":109.612205,"lat":18.890522,"grp":"mountain","ttl":"五指山大峡谷漂流_gd","info":"13公里<br>开放时间：9:00~16:00仅周末开"},
+								 {"lng":109.665981,"lat":18.874392,"grp":"mountain","ttl":"雨林谷漂流_gd","info":"雨林风景区内<br>开放时间：12:30每天"},
+								 {"lng":109.517703,"lat":18.983161,"grp":"mountain","ttl":"牙胡梯田_gd","info":"海南最美梯田，车至村口，走上去"},
+
+								 //保亭
+								 {"lng":109.703208,"lat":18.707736,"grp":"mountain","ttl":"七仙岭温泉国家森林公园_gd","info":"仙气十足，3小时行程，温泉山庄是唯一露天<br>开放时间：8:30~16:00"},
+								 {"lng":109.654937,"lat":18.458283,"grp":"park","ttl":"呀诺达雨林文化旅游区_gd","info":"褒贬不一的游乐园，价高<br>开放时间：8:00~18:00"},
+
+								 //临高
+								 {"lng":109.553055,"lat":19.935327,"grp":"culture","ttl":"调楼木船厂_gd","info":"手工造木船"},
+
+
+								 //儋州
+								 {"lng":109.582429,"lat":19.518187,"grp":"food","ttl":"那大小吃_gd","info":"那大第一小学东门街附近，清晨校门口的番薯糖水、花生椰丝糕、洛基粽子，晚上东门街的卤鸭、炒田螺、米烂"},
+								 {"lng":109.356095,"lat":19.749516,"grp":"culture","ttl":"中和古镇_gd","info":"顺便逛逛"},
+								 {"lng":109.364432,"lat":19.746684,"grp":"culture","ttl":"东坡书院_gd","info":"84年重建，观赏意义不大"},
+								 {"lng":109.22324,"lat":19.744321,"grp":"culture","ttl":"千年古盐田_gd","info":"国家非遗"},
+
+
+
+
+
+
+
+
+
+
+
+
+
+							  ];
+	/*----------------------------------------数据更新----------------------------------------*/
+
+	//旅行分类标签
+	var grpIcon = {"food":new BMapGL.SVGSymbol("M176 56c0-13.3 10.7-24 24-24h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H200c-13.3 0-24-10.7-24-24zm24 48h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H200c-13.3 0-24-10.7-24-24s10.7-24 24-24zM56 176H72c13.3 0 24 10.7 24 24s-10.7 24-24 24H56c-13.3 0-24-10.7-24-24s10.7-24 24-24zM0 283.4C0 268.3 12.3 256 27.4 256H484.6c15.1 0 27.4 12.3 27.4 27.4c0 70.5-44.4 130.7-106.7 154.1L403.5 452c-2 16-15.6 28-31.8 28H140.2c-16.1 0-29.8-12-31.8-28l-1.8-14.4C44.4 414.1 0 353.9 0 283.4zM224 200c0-13.3 10.7-24 24-24h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H248c-13.3 0-24-10.7-24-24zm-96 0c0-13.3 10.7-24 24-24h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24zm-24-96h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H104c-13.3 0-24-10.7-24-24s10.7-24 24-24zm216 96c0-13.3 10.7-24 24-24h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H344c-13.3 0-24-10.7-24-24zm-24-96h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H296c-13.3 0-24-10.7-24-24s10.7-24 24-24zm120 96c0-13.3 10.7-24 24-24h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H440c-13.3 0-24-10.7-24-24zm-24-96h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H392c-13.3 0-24-10.7-24-24s10.7-24 24-24zM296 32h16c13.3 0 24 10.7 24 24s-10.7 24-24 24H296c-13.3 0-24-10.7-24-24s10.7-24 24-24z",
+																						{fillColor:'#762f07',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+								 "hotel":new BMapGL.SVGSymbol("M32 32c17.7 0 32 14.3 32 32V320H288V160c0-17.7 14.3-32 32-32H544c53 0 96 43 96 96V448c0 17.7-14.3 32-32 32s-32-14.3-32-32V416H352 320 64v32c0 17.7-14.3 32-32 32s-32-14.3-32-32V64C0 46.3 14.3 32 32 32zm144 96a80 80 0 1 1 0 160 80 80 0 1 1 0-160z",
+																						 {fillColor:'#824880',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+								 "traffic":new BMapGL.SVGSymbol("M135.2 117.4L109.1 192H402.9l-26.1-74.6C372.3 104.6 360.2 96 346.6 96H165.4c-13.6 0-25.7 8.6-30.2 21.4zM39.6 196.8L74.8 96.3C88.3 57.8 124.6 32 165.4 32H346.6c40.8 0 77.1 25.8 90.6 64.3l35.2 100.5c23.2 9.6 39.6 32.5 39.6 59.2V400v48c0 17.7-14.3 32-32 32H448c-17.7 0-32-14.3-32-32V400H96v48c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V400 256c0-26.7 16.4-49.6 39.6-59.2zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm288 32a32 32 0 1 0 0-64 32 32 0 1 0 0 64z",
+																						 {fillColor:'#956f29',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+								 "mountain":new BMapGL.SVGSymbol("M560 160A80 80 0 1 0 560 0a80 80 0 1 0 0 160zM55.9 512H381.1h75H578.9c33.8 0 61.1-27.4 61.1-61.1c0-11.2-3.1-22.2-8.9-31.8l-132-216.3C495 196.1 487.8 192 480 192s-15 4.1-19.1 10.7l-48.2 79L286.8 81c-6.6-10.6-18.3-17-30.8-17s-24.1 6.4-30.8 17L8.6 426.4C3 435.3 0 445.6 0 456.1C0 487 25 512 55.9 512z",
+ 																						{fillColor:'#057748',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+ 								 "waters":new BMapGL.SVGSymbol("M346.3 271.8l-60.1-21.9L214 448H32c-17.7 0-32 14.3-32 32s14.3 32 32 32H544c17.7 0 32-14.3 32-32s-14.3-32-32-32H282.1l64.1-176.2zm121.1-.2l-3.3 9.1 67.7 24.6c18.1 6.6 38-4.2 39.6-23.4c6.5-78.5-23.9-155.5-80.8-208.5c2 8 3.2 16.3 3.4 24.8l.2 6c1.8 57-7.3 113.8-26.8 167.4zM462 99.1c-1.1-34.4-22.5-64.8-54.4-77.4c-.9-.4-1.9-.7-2.8-1.1c-33-11.7-69.8-2.4-93.1 23.8l-4 4.5C272.4 88.3 245 134.2 226.8 184l-3.3 9.1L434 269.7l3.3-9.1c18.1-49.8 26.6-102.5 24.9-155.5l-.2-6zM107.2 112.9c-11.1 15.7-2.8 36.8 15.3 43.4l71 25.8 3.3-9.1c19.5-53.6 49.1-103 87.1-145.5l4-4.5c6.2-6.9 13.1-13 20.5-18.2c-79.6 2.5-154.7 42.2-201.2 108z",
+ 																						 {fillColor:'#177cb0',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+ 								 "culture":new BMapGL.SVGSymbol("M240.1 4.2c9.8-5.6 21.9-5.6 31.8 0l171.8 98.1L448 104l0 .9 47.9 27.4c12.6 7.2 18.8 22 15.1 36s-16.4 23.8-30.9 23.8H32c-14.5 0-27.2-9.8-30.9-23.8s2.5-28.8 15.1-36L64 104.9V104l4.4-1.6L240.1 4.2zM64 224h64V416h40V224h64V416h48V224h64V416h40V224h64V420.3c.6 .3 1.2 .7 1.8 1.1l48 32c11.7 7.8 17 22.4 12.9 35.9S494.1 512 480 512H32c-14.1 0-26.5-9.2-30.6-22.7s1.1-28.1 12.9-35.9l48-32c.6-.4 1.2-.7 1.8-1.1V224z",
+ 																						 {fillColor:'#5d513c',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+								 "park":new BMapGL.SVGSymbol("M407 47c9.4-9.4 24.6-9.4 33.9 0l17.2 17.2c1.9-.1 3.9-.2 5.8-.2h32c11.2 0 21.9 2.3 31.6 6.5L543 55c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9L564 101.9c7.6 12.2 12 26.7 12 42.1c0 10.2 7.4 18.8 16.7 23c27.9 12.5 47.3 40.5 47.3 73c0 26.2-12.6 49.4-32 64v32c0 8.8-7.2 16-16 16H560c-8.8 0-16-7.2-16-16V320H480v16c0 8.8-7.2 16-16 16H432c-8.8 0-16-7.2-16-16V318.4c-11.8-2.4-22.7-7.4-32-14.4c-1.5-1.1-2.9-2.3-4.3-3.5c-17-14.7-27.7-36.4-27.7-60.5c0-8.8-7.2-16-16-16s-16 7.2-16 16c0 44.7 26.2 83.2 64 101.2V352c0 17.7 14.3 32 32 32h32v64c0 17.7-14.3 32-32 32H352c-17.7 0-32-14.3-32-32V372c-19.8 7.7-41.4 12-64 12s-44.2-4.3-64-12v76c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V329.1L45.9 369.7c-5.4 12.1-19.6 17.6-31.7 12.2S-3.3 362.4 2.1 350.3L24 300.9c5.3-11.9 8-24.7 8-37.7C32 155.7 117.2 68 223.8 64.1l.2-.1h7.2H256h32c41.7 0 83.4 12.1 117.2 25.7c1.7-1.8 3.5-3.6 5.3-5.2L407 81c-9.4-9.4-9.4-24.6 0-33.9zm73 185a24 24 0 1 0 -48 0 24 24 0 1 0 48 0zm88 24a24 24 0 1 0 0-48 24 24 0 1 0 0 48zM480 144a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm48 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z",
+ 																						{fillColor:'#2e4e7e',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+								 "like":new BMapGL.SVGSymbol("M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z",
+																						{fillColor:'#bf242a',fillOpacity:0.8,strokeOpacity:0,scale:0.05}),
+								};
+
+	//初始化变量
+	var jrnCoo = [];//地点坐标
+	var jrnInfo = [];//地点弹出信息
+	var jrnMkr = [];//地点标签
+
+	//生成图层并监听
+	for (var i = 0; i < jrnData.length; i++) {
+		jrnCoo.push(new BMapGL.Point(jrnData[i].lng,jrnData[i].lat));
+		jrnInfo.push(new BMapGL.InfoWindow(jrnData[i].info,{width:200,title:jrnData[i].ttl}));
+		jrnMkr.push(new BMapGL.Marker(jrnCoo[i],{icon:grpIcon[jrnData[i].grp]}));
+		map.addOverlay(jrnMkr[i]);
+		lsnIcon(jrnData[i],jrnMkr[i],jrnInfo[i],jrnCoo[i]);
+	}
+
+	//标签监听函数
+	function lsnIcon(data,mkr,info,coo){
+		mkr.onclick = "void(0)";
+		mkr.addEventListener("mouseover", function(){map.openInfoWindow(info, coo)});//移入显示
+		mkr.addEventListener("mouseout", function(){map.closeInfoWindow(info, coo)});//移出显示
+		var clickHandler = ('ontouchstart' in document.documentElement ? "touchstart" : "click");
+
+		mkr.addEventListener(clickHandler, function(){map.openInfoWindow(info, coo)});//触碰显示
+		if (/(iPhone|iPad|iPod|iOS)/i.test(navigator.userAgent)) {//alert('这是IOS');
+			var addr = "baidumap://map/marker?location="+String(coo.lat)+","+String(coo.lng)+"&title="+data.ttl+"&content=目的地&src=ios.baidu.openAPIdemo"
+		}
+		else if (/(Android|MZBrowser)/i.test(navigator.userAgent)) {//alert('这是Android');
+			var addr = "bdapp://map/marker?location="+String(coo.lat)+","+String(coo.lng)+"&title="+data.ttl+"&content=目的地&traffic=on&src=andr.baidu.openAPIdemo"
+		}
+		else {//alert(navigator.userAgent);
+			var addr = "http://api.map.baidu.com/marker?location="+String(coo.lat)+","+String(coo.lng)+"&title="+data.ttl+"&content=目的地&output=html&src=webapp.baidu.openAPIdemo"
+		};
+		mkr.addEventListener("dblclick", function(){window.location.href = addr});//双击跳转APP
+	}
+
+	//分组显示隐藏标签
+	var group = document.getElementById('group');//获取当前分类
+	group.onchange = function() {
+		for (var j = 0; j < jrnData.length; j++) {
+			if (this.value == jrnData[j].grp | this.value == "all") {//当前选项值为all或为某一旅行分类时，显示条件满足的标签，否则隐藏
+				jrnMkr[j].show();
+			}
+			else {
+				jrnMkr[j].hide();
+			}
+		}
+		//alert(group.options[group.selectedIndex].value);
+	}
+
+</script>
